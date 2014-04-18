@@ -29,10 +29,13 @@ def factory(
         token = request.cookies.get(TOKEN)
         old_email = email = None
         if token:
-            email = serializer.loads(token)
-
-            old_email = env.get('REMOTE_USER')
-            env['REMOTE_USER'] = email
+            try:
+                email = serializer.loads(token)
+            except itsdangerous.BadTimeSignature:
+                pass # just don't log them in
+            else:
+                old_email = env.get('REMOTE_USER')
+                env['REMOTE_USER'] = email
 
         try:
             return (persona_app if env['PATH_INFO'].startswith(prefix)
