@@ -5,17 +5,21 @@ require(
         if (signinLink) {
             signinLink.onclick = function() { navigator.id.request(); };
         }
-
+        var signoutLink = document.getElementById('signout');
+        if (signoutLink) {
+            signoutLink.onclick = function() { navigator.id.logout(); };
+        }
+        var email = "%(email)s";
         navigator.id.watch(
             {
-                loggedInUser: "%(email)s",
+                loggedInUser: email.length > 0 ? email : null,
                 onlogin: function(assertion) {
                     dojo.xhr.post(
                         {
                             url: "%(prefix)s/login",
                             content: { assertion: assertion },
                             load: function () {
-                                window.location = "%(url)s";
+                                window.location = came_from;
                             },
                             error: function(err) {
                                 navigator.id.logout();
@@ -28,7 +32,7 @@ require(
                         {
                             url: '%(prefix)s/logout',
                             load: function () {
-                                window.location = "%(prefix)s/login.html";
+                                window.location = came_from;
                             },
                             error: function(err) {
                                 alert("Logout failure: " + err); }

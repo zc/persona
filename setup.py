@@ -13,12 +13,12 @@
 ##############################################################################
 name, version = 'zc.persona', '0'
 
-install_requires = ['setuptools']
+install_requires = ['setuptools', 'bobo', 'itsdangerous', 'requests']
 extras_require = dict(test=['manuel', 'mock', 'zope.testing'])
 
 entry_points = """
 [paste.filter_app_factory]
-persona = zc.persona:factory
+main = zc.persona:factory
 """
 
 from setuptools import setup

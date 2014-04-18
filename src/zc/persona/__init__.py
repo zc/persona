@@ -1,24 +1,9 @@
 import bobo
 import itsdangerous
 import json
-import logging
 import os
 import requests
 import webob
-
-logging.basicConfig(level='INFO')
-
-login_html = """<html><head><title>Login</title>
-<script src="https://login.persona.org/include.js"></script>
-<script src="//ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/dojo.js"></script>
-<script src="login.js"></script>
-</head>
-<body class="tundra">
-
-<button type="button" id="signin">Log in!</button>
-
-</body></html>
-"""
 
 TOKEN = 'auth_token'
 
@@ -26,7 +11,7 @@ def factory(
     app,
     defauts,
     secret,
-    url='http://localhost:8080',
+    audience='http://localhost:8080',
     prefix='/persona',
     ):
 
@@ -34,12 +19,13 @@ def factory(
 
     @bobo.subroute(prefix)
     def routes(request):
-        return Routes(request, url, prefix, serializer)
+        return Routes(request, audience, prefix, serializer)
 
     persona_app = bobo.Application(bobo_resources = [routes])
 
     def run_app(env, start):
         request = webob.Request(env)
+
         token = request.cookies.get(TOKEN)
         old_email = email = None
         if token:
@@ -53,16 +39,31 @@ def factory(
                     else app)(env, start)
         finally:
             if email:
-                if old_user:
-                    env['REMOTE_USER'] = old_user
+                if old_email:
+                    env['REMOTE_USER'] = old_email
                 else:
                     del env['REMOTE_USER']
 
     return run_app
 
 @bobo.get('/')
+@bobo.get('/test')
 def test(bobo_request):
-    return 'hi '+bobo_request.environ.get('REMOTE_USER', 'wtf?')
+    return 'hi '+bobo_request.environ.get('REMOTE_USER', 'wtf?  aaaa')
+
+
+html = """<html><head><title>Log%(inout)s</title>
+<script src="https://login.persona.org/include.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/dojo/1.8.3/dojo/dojo.js"></script>
+<script>
+came_from = "%(came_from)s"
+</script>
+<script src="login.js"></script>
+</head>
+<body class="tundra">
+<button type="button" id="sign%(inout)s">Log %(inout)s!</button>
+</body></html>
+"""
 
 @bobo.scan_class
 class Routes:
@@ -70,35 +71,41 @@ class Routes:
     def __init__(
         self,
         request,
-        url,
+        audience,
         prefix,
         serializer,
         ):
         self.request = request
-        self.url = url
+        self.audience = audience
         self.prefix = prefix
         self.serializer = serializer
 
     @bobo.query('/login.html')
-    def login_html(self):
-        return login_html
+    def login_html(self, came_from='/'):
+        return html % dict(came_from = came_from,
+                           inout='in',
+                           )
+
+    @bobo.query('/logout.html')
+    def logout_html(self, came_from='/'):
+        return html % dict(came_from = came_from,
+                           inout='out',
+                           )
 
     @bobo.query('/login.js', content_type="application/javascript")
     def login_js(self):
-        email = self.request.environ.get('REMOTE_USER')
+        email = self.request.environ.get('REMOTE_USER', '')
         with open(os.path.join(os.path.dirname(__file__), 'login.js')) as f:
             return f.read() % dict(
-                url=self.url,
                 prefix=self.prefix,
-                email = repr(str(email)) if email else 'null'
+                email = email
                 )
 
 
     @bobo.post('/login')
     def login(self, assertion):
-
         # Send the assertion to Mozilla's verifier service.
-        data = {'assertion': assertion, 'audience': self.url}
+        data = {'assertion': assertion, 'audience': self.audience}
         resp = requests.post(
             'https://verifier.login.persona.org/verify', data=data, verify=True)
 
@@ -110,7 +117,7 @@ class Routes:
             # Check if the assertion was valid
             if verification_data['status'] == 'okay':
                 email = verification_data['email']
-                response = bobo.redirect(self.url)
+                response = webob.Response('Logged in')
                 response.set_cookie(TOKEN, self.serializer.dumps(email))
                 return response
             else:
@@ -121,6 +128,6 @@ class Routes:
 
     @bobo.post('/logout')
     def logout(self):
-        response = bobo.redirect(self.url)
+        response = webob.Response('bye')
         response.set_cookie(TOKEN, '')
         return response
