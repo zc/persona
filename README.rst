@@ -1,9 +1,11 @@
+WSGI middleware providing Personna authentication
+=================================================
 
 
 Changes
 *******
 
-0.1.0 (yyyy-mm-dd)
+0.1.0 (2014-04-18)
 ==================
 
-Initial release
+It's fuggly.

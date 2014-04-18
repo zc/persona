@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-name, version = 'zc.persona', '0'
+name, version = 'zc.persona', '0.1.0'
 
 install_requires = ['setuptools', 'bobo', 'itsdangerous', 'requests']
 extras_require = dict(test=['manuel', 'mock', 'zope.testing'])
