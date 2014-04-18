@@ -11,7 +11,7 @@
 # FOR A PARTICULAR PURPOSE.
 #
 ##############################################################################
-name, version = 'zc.persona', '0.1.0'
+name, version = 'zc.persona', '0.1.1'
 
 install_requires = ['setuptools', 'bobo', 'itsdangerous', 'requests']
 extras_require = dict(test=['manuel', 'mock', 'zope.testing'])
@@ -39,7 +39,7 @@ setup(
     install_requires = install_requires,
     zip_safe = False,
     entry_points=entry_points,
-    package_data = {name: ['*.txt', '*.test', '*.html']},
+    package_data = {name: ['*.txt', '*.test', '*.html', '*.js']},
     extras_require = extras_require,
     tests_require = extras_require['test'],
     test_suite = name+'.tests.test_suite',
