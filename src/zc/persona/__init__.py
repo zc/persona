@@ -38,8 +38,22 @@ def factory(
                 env['REMOTE_USER'] = email
 
         try:
-            return (persona_app if env['PATH_INFO'].startswith(prefix)
-                    else app)(env, start)
+            if env['PATH_INFO'].startswith(prefix):
+                return persona_app(env, start)
+            else:
+                needs_login = []
+                def start_response(status, headers, exc_info=None):
+                    if status.startswith("401 "):
+                        needs_login.append(0)
+                    else:
+                        start(status, headers, exc_info)
+                it = app(env, start_response)
+                if needs_login:
+                    return bobo.redirect(
+                        prefix+'/login.html?came_from='+env['PATH_INFO']
+                        )(env, start)
+                else:
+                    return it
         finally:
             if email:
                 if old_email:
