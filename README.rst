@@ -1,5 +1,5 @@
-WSGI middleware providing Personna authentication
-=================================================
+WSGI middleware providing Persona authentication
+================================================
 
 
 Changes
